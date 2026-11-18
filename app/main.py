@@ -1,13 +1,29 @@
 import socket  # noqa: F401
 import threading
 
+def resp_parser(resp_bytes):
+    # print(resp_bytes.split(b'\r\n'))
+    command = []
+    resp_bytes_split = resp_bytes.split(b'\r\n')
+    length = len(resp_bytes_split)
+    for i in range(2, length, 2):
+        # print(resp_bytes.split(b'\r\n')[i])
+        command.append(resp_bytes_split[i].decode())
+    return command
+
 def handle_connection(connection):
     try:
         while True:
             data = connection.recv(1024)
             if not data:
                 break
-            connection.sendall(b"+PONG\r\n")
+
+            parsed_data = resp_parser(data)
+            # print(parsed_data)
+            if parsed_data[0].upper() == "PING":
+                connection.sendall(b"+PONG\r\n")
+            elif parsed_data[0].upper() == "ECHO":
+                connection.sendall(b"+" + b" ".join([x.encode() for x in parsed_data[1:]]) + b"\r\n")
     except (ConnectionResetError, BrokenPipeError):
         pass
     finally:
