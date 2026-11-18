@@ -11,6 +11,9 @@ def resp_parser(resp_bytes):
         command.append(resp_bytes_split[i].decode())
     return command
 
+def encode_bulk_string(s):
+    return b"$" + str(len(s)).encode() + b"\r\n" + s.encode() + b"\r\n"
+
 def handle_connection(connection):
     try:
         while True:
@@ -23,7 +26,7 @@ def handle_connection(connection):
             if parsed_data[0].upper() == "PING":
                 connection.sendall(b"+PONG\r\n")
             elif parsed_data[0].upper() == "ECHO":
-                connection.sendall(b"+" + b" ".join([x.encode() for x in parsed_data[1:]]) + b"\r\n")
+                connection.sendall(encode_bulk_string(" ".join([x for x in parsed_data[1:]])))
     except (ConnectionResetError, BrokenPipeError):
         pass
     finally:
